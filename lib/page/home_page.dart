@@ -12,8 +12,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final double balance = 12940; //TODO
-  final List transactions = []; //TODO
+  double balance = 0;
+  final List<Map<String, dynamic>> transactions = [];
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
           child: ListView(
             children: [
-              CustomWallet(balance: balance), //TODO
+              CustomWallet(balance: balance),
               SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,11 +55,15 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               TransactionCard(
-                transactions: [
-                  {'title': 'Grocery', 'amount': -50},
-                  {'title': 'Electricity Bill', 'amount': -30},
-                  {'title': 'Salary', 'amount': 1500,}
-                ],
+                transactions:
+                    transactions
+                        .map(
+                          (t) => {
+                            'title': t['title'].toString(),
+                            'amount': (t['amount'] as num).toDouble(),
+                          },
+                        )
+                        .toList(),
               ),
             ],
           ),
@@ -79,9 +83,7 @@ class _HomePageState extends State<HomePage> {
             child: Icon(Icons.add, color: Colors.white, size: 40),
             label: "Add Income",
             labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            onTap: () {
-              addIncome();
-            },
+            onTap: () => addTransaction(true),
           ),
           SpeedDialChild(
             shape: CircleBorder(),
@@ -89,27 +91,65 @@ class _HomePageState extends State<HomePage> {
             child: Icon(Icons.remove, color: Colors.white, size: 40),
             label: "Add Expense",
             labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            onTap: () {},
+            onTap: () => addTransaction(false),
           ),
         ],
       ),
     );
   }
 
-  Future addIncome() => showDialog(
-    context: context,
-    builder:
-        (context) => AlertDialog(
-          title: Text("Add Income"),
-          content: TextField(
-            autofocus: true,
-            decoration: InputDecoration(hintText: "Enter Income Amount"),
-          ),
-          actions: [TextButton(onPressed: submit, child: Text("Submit"))],
-        ),
-  );
+  Future addTransaction(bool isIncome) {
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController titleController = TextEditingController();
 
-  void submit() {
-    Navigator.of(context).pop();
+    return showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(isIncome ? "Add Income" : "Add Expense"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(hintText: "Enter Title"),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(hintText: "Enter Amount"),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  double? amount = double.tryParse(amountController.text);
+                  if (amount != null) {
+                    setState(() {
+                      transactions.add({
+                        'title': titleController.text,
+                        'amount':
+                            isIncome
+                                ? amount
+                                : -amount, // ตรวจสอบให้เป็น num/double
+                      });
+                      balance += isIncome ? amount : -amount;
+                    });
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Text("Submit"),
+              ),
+            ],
+          ),
+    );
   }
 }
