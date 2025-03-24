@@ -16,7 +16,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    // เข้าถึง transactionProvider จาก Provider
     final transactionProvider = Provider.of<TransactionProvider>(context);
 
     return Scaffold(
@@ -26,7 +25,6 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
           child: ListView(
             children: [
-              // ใช้ balance จาก Provider
               CustomWallet(balance: transactionProvider.balance),
               SizedBox(height: 30),
               Row(
@@ -57,16 +55,16 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
-              // แสดงรายการธุรกรรมจาก transactionProvider
               TransactionCard(
-                transactions: transactionProvider.transactions
-                    .map(
-                      (t) => {
-                        'title': t['title'].toString(),
-                        'amount': (t['amount'] as num).toDouble(),
-                      },
-                    )
-                    .toList(),
+                transactions:
+                    transactionProvider.transactions
+                        .map(
+                          (t) => {
+                            'title': t['title'].toString(),
+                            'amount': (t['amount'] as num).toDouble(),
+                          },
+                        )
+                        .toList(),
               ),
             ],
           ),
@@ -101,52 +99,71 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future addTransaction(bool isIncome, TransactionProvider transactionProvider) {
+  Future addTransaction(
+    bool isIncome,
+    TransactionProvider transactionProvider,
+  ) {
     final TextEditingController amountController = TextEditingController();
-    final TextEditingController titleController = TextEditingController();
+    String? selectedCategory;
+    final List<String> categories =
+        isIncome
+            ? ["Salary", "Part-time", "Business", "Gift"]
+            : ["Food", "Game", "Movie", "Shopping", "Transport"];
 
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isIncome ? "Add Income" : "Add Expense"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(hintText: "Enter Title"),
+      builder:
+          (context) => AlertDialog(
+            title: Text(isIncome ? "Add Income" : "Add Expense"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  hint: Text("Select Category"),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCategory = value;
+                    });
+                  },
+                  items:
+                      categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(hintText: "Enter Amount"),
+                ),
+              ],
             ),
-            SizedBox(height: 10),
-            TextField(
-              controller: amountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(hintText: "Enter Amount"),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text("Cancel"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  double? amount = double.tryParse(amountController.text);
+                  if (amount != null && selectedCategory != null) {
+                    transactionProvider.addTransaction(
+                      title: selectedCategory!,
+                      amount: isIncome ? amount : -amount,
+                    );
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Text("Submit"),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              double? amount = double.tryParse(amountController.text);
-              if (amount != null) {
-                // ใช้ transactionProvider เพื่อเพิ่มข้อมูล
-                transactionProvider.addTransaction(
-                  title: titleController.text,
-                  amount: isIncome ? amount : -amount,
-                );
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text("Submit"),
-          ),
-        ],
-      ),
     );
   }
 }
