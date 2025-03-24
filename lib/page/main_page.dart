@@ -16,7 +16,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     HomePage(),
     ChartPage(),
-    TransactionPage(),
+    TransactionHistoryPage(),
     SettingsPage(),
   ];
 

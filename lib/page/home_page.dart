@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:income/transaction_provider.dart';
 import 'package:income/widget/custom_appbar.dart';
 import 'package:income/widget/custom_transactions.dart';
 import 'package:income/widget/custom_wallet.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,11 +14,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  double balance = 0;
-  final List<Map<String, dynamic>> transactions = [];
-
   @override
   Widget build(BuildContext context) {
+    // เข้าถึง transactionProvider จาก Provider
+    final transactionProvider = Provider.of<TransactionProvider>(context);
+
     return Scaffold(
       appBar: CustomAppBar(title: "Wallet", showProfile: true),
       body: SafeArea(
@@ -24,7 +26,8 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
           child: ListView(
             children: [
-              CustomWallet(balance: balance),
+              // ใช้ balance จาก Provider
+              CustomWallet(balance: transactionProvider.balance),
               SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -54,16 +57,16 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
+              // แสดงรายการธุรกรรมจาก transactionProvider
               TransactionCard(
-                transactions:
-                    transactions
-                        .map(
-                          (t) => {
-                            'title': t['title'].toString(),
-                            'amount': (t['amount'] as num).toDouble(),
-                          },
-                        )
-                        .toList(),
+                transactions: transactionProvider.transactions
+                    .map(
+                      (t) => {
+                        'title': t['title'].toString(),
+                        'amount': (t['amount'] as num).toDouble(),
+                      },
+                    )
+                    .toList(),
               ),
             ],
           ),
@@ -83,7 +86,7 @@ class _HomePageState extends State<HomePage> {
             child: Icon(Icons.add, color: Colors.white, size: 40),
             label: "Add Income",
             labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            onTap: () => addTransaction(true),
+            onTap: () => addTransaction(true, transactionProvider),
           ),
           SpeedDialChild(
             shape: CircleBorder(),
@@ -91,65 +94,59 @@ class _HomePageState extends State<HomePage> {
             child: Icon(Icons.remove, color: Colors.white, size: 40),
             label: "Add Expense",
             labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            onTap: () => addTransaction(false),
+            onTap: () => addTransaction(false, transactionProvider),
           ),
         ],
       ),
     );
   }
 
-  Future addTransaction(bool isIncome) {
+  Future addTransaction(bool isIncome, TransactionProvider transactionProvider) {
     final TextEditingController amountController = TextEditingController();
     final TextEditingController titleController = TextEditingController();
 
     return showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(isIncome ? "Add Income" : "Add Expense"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(hintText: "Enter Title"),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(hintText: "Enter Amount"),
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: Text(isIncome ? "Add Income" : "Add Expense"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(hintText: "Enter Title"),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () {
-                  double? amount = double.tryParse(amountController.text);
-                  if (amount != null) {
-                    setState(() {
-                      transactions.add({
-                        'title': titleController.text,
-                        'amount':
-                            isIncome
-                                ? amount
-                                : -amount, // ตรวจสอบให้เป็น num/double
-                      });
-                      balance += isIncome ? amount : -amount;
-                    });
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: Text("Submit"),
-              ),
-            ],
+            SizedBox(height: 10),
+            TextField(
+              controller: amountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(hintText: "Enter Amount"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("Cancel"),
           ),
+          TextButton(
+            onPressed: () {
+              double? amount = double.tryParse(amountController.text);
+              if (amount != null) {
+                // ใช้ transactionProvider เพื่อเพิ่มข้อมูล
+                transactionProvider.addTransaction(
+                  title: titleController.text,
+                  amount: isIncome ? amount : -amount,
+                );
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text("Submit"),
+          ),
+        ],
+      ),
     );
   }
 }
