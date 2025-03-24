@@ -1,17 +1,16 @@
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:income/page/chart_page.dart';
-import 'package:income/page/home_page.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 
-class NavBar extends StatefulWidget {
-  const NavBar({super.key,});
+class NavBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onTabChange;
 
-  @override
-  State<NavBar> createState() => _NavBarState();
-}
+  const NavBar({Key? key, required this.selectedIndex, required this.onTabChange}) : super(key: key);
 
-class _NavBarState extends State<NavBar> {
+  void _onTabChange(BuildContext context, int index) {
+    onTabChange(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,52 +19,23 @@ class _NavBarState extends State<NavBar> {
         color: Color(0xFF2F4F5E),
         borderRadius: BorderRadius.circular(35),
       ),
-      
       child: GNav(
         backgroundColor: Colors.transparent,
         color: Colors.white,
-        activeColor: Colors.white70, // Slightly different active color
+        activeColor: Colors.white70,
         gap: 8,
         iconSize: 24,
-        padding: EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 30,
-        ), // navigation bar padding
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+        selectedIndex: selectedIndex,
+        onTabChange: (index) => _onTabChange(context, index),
         tabs: [
-          GButton(icon: LineIcons.home,
-          text: 'Home', 
-          onPressed: () {
-            setState(() {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage()),
-                );
-              });
-          }),
-          GButton(
-            icon: LineIcons.pieChart,
-            text: 'Chart',
-            onPressed: () {
-              setState(() {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChartPage()),
-                );
-              });
-            },
-          ),
-          GButton(
-            icon: LineIcons.history,
-            text: 'Transaction',
-            onPressed: () {},
-          ),
-          GButton(
-            icon: Icons.settings_outlined,
-            text: 'Setting',
-            onPressed: () {},
-          ),
+          GButton(icon: LineIcons.home, text: 'Home'),
+          GButton(icon: LineIcons.pieChart, text: 'Chart'),
+          GButton(icon: LineIcons.history, text: 'Transaction'),
+          GButton(icon: Icons.settings_outlined, text: 'Setting'),
         ],
       ),
     );
   }
 }
+

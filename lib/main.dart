@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:income/page/home_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:income/page/main_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.poppinsTextTheme(), // ใช้ฟอนต์ Poppins ทั้งแอป
       ),
-      home: const HomePage(),
+      home: MainPage(),
     );
   }
 }
